@@ -19,6 +19,7 @@ struct Set {
 struct Game {
     id: u32,
     sets: Vec<Set>,
+    few_set: Set,
     valid: bool,
 }
 
@@ -27,8 +28,26 @@ impl Game {
         let mut ret_game = Game {
             id: 0,
             sets: Vec::new(),
+
+            few_set: Set {
+                red: 0,
+                green: 0,
+                blue: 0,
+                valid: true,
+                total: 0,
+            },
+
             valid: true,
         };
+
+        let mut current_set = Set {
+            red: 0,
+            green: 0,
+            blue: 0,
+            valid: true,
+            total: 0,
+        };
+
         let game: Vec<&str> = entry.split(":").collect();
         ret_game.id = game[0].replace("Game ", "").parse::<u32>().unwrap();
         let sets: Vec<&str> = game[1].split(";").collect();
@@ -42,8 +61,20 @@ impl Game {
                     ret_game.valid = false;
                 }
 
+                if s.red > current_set.red {
+                    current_set.red = s.red;
+                }
+
+                if s.green > current_set.green {
+                    current_set.green = s.green;
+                }
+
+                if s.blue > current_set.blue {
+                    current_set.blue = s.blue;
+                }
             }
         }
+        ret_game.few_set = current_set;
         ret_game
     }
 }
@@ -83,22 +114,29 @@ impl Set {
         }
         ret_set
     }
+
+    pub fn power(&self) -> u64 {
+        (self.red * self.green * self.blue).into()
+    }
 }
 
 fn main() {
     get_games();
 }
 
-fn get_games() -> u32 {
+fn get_games() {
     let mut total: u32 = 0;
+    let mut step2_total: u64 = 0;
     for line in fs::read_to_string("input").unwrap().lines() {
         let game = Game::new(line.to_string());
         if game.valid {
             debug!("ID: {}, VALID: {}!", game.id, game.valid);
             total += game.id;
         }
+        let power = game.few_set.power();
+        println!("FEWEST SET FOR GAME: {} -> {:?}: power: {}", game.id, game.few_set, power);
+        step2_total += power;
     }
-    println!("TOTAL: {}", total);
-    total
-
+    println!("TOTAL STEP 1: {}", total);
+    println!("TOTAL STEP 2: {}", step2_total);
 }
